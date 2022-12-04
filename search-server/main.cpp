@@ -64,7 +64,7 @@ public:
         ++document_count_;
 
         for (const string& word : words){
-            word_to_documents_[word][document_id] += inv_word_count; 
+            words_to_documents_[word][document_id] += inv_word_count; 
         }
     }
 
@@ -85,12 +85,11 @@ public:
 
 private:
     struct QueryContent {
-        set<string> words;
-        set<string> exept_words;
+        set<string> plus_words;
+        set<string> minus_words;
     };
 
-    //map<string, set<int>> word_to_documents_;   // {word, {ids where word can be found}}
-    map<string, map<int, double>> word_to_documents_;   // {word, {ids where word can be found, TF}}
+    map<string, map<int, double>> words_to_documents_;   // {word, {ids where word can be found, TF}}
     set<string> stop_words_;                    // words that remove doc from result
     int document_count_ = 0;                    // total N of docs
 
@@ -110,54 +109,48 @@ private:
     }
 
     QueryContent ParseQuery(const string& text) const {
-        QueryContent query_words;
+        QueryContent query;
         for (const string& word : SplitIntoWordsNoStop(text)) {
             
             if (word[0] == '-') {
-                query_words.exept_words.insert((word.substr(1)));
+                query.minus_words.insert((word.substr(1)));
             } else {
-                query_words.words.insert(word);
+                query.plus_words.insert(word);
             }
         }
-        return query_words;
+        return query;
+    }
+
+    double CalculateIdf(const int& found_in) const {
+        return log(static_cast <double> (document_count_)/found_in);
     }
 
     vector<Document> FindAllDocuments(const QueryContent& query_words) const {
         vector<Document> matched_documents;
         map<int, double> document_to_relevance; // {id, relevance}
-        //map<string, double> query_idf;  // {query, IDF}
         
-        for (const auto& query_word : query_words.words) {
-            if( auto it = word_to_documents_.find(query_word); it != word_to_documents_.end()){
+        for (const auto& query_word : query_words.plus_words) {
+            if( auto word_to_docs_it = words_to_documents_.find(query_word); word_to_docs_it != words_to_documents_.end()){
 
-                double  query_idf = log(static_cast <double> (document_count_)/it->second.size());                           
+                double  query_idf = CalculateIdf(word_to_docs_it->second.size());
 
-                for (auto &id : it->second){
-                    //cout << id.first << " " << query_word << ": " << query_idf << " * " << id.second << endl;
-                    document_to_relevance[id.first] += query_idf * id.second;
+                for (auto &[id, relevance] : word_to_docs_it->second){
+                    document_to_relevance[id] += query_idf * relevance;
                 }
             }
         }
 
-        for(const auto& word : query_words.exept_words){
-            if( auto it = word_to_documents_.find(word); it != word_to_documents_.end()){
-                for (auto &id : it->second){
+        for(const auto& word : query_words.minus_words){
+            if( auto word_to_docs_it = words_to_documents_.find(word); word_to_docs_it != words_to_documents_.end()){
+                for (auto &id : word_to_docs_it->second){
                     document_to_relevance.erase(id.first);
                 }
             }
         }
 
-        for(const auto& i : document_to_relevance){
-            matched_documents.push_back({i.first, i.second});
+        for(const auto& [id, relevance] : document_to_relevance){
+            matched_documents.push_back({id, relevance});
         }
-/*
-        for (auto i : word_to_documents_){
-            cout << i.first << " - ";
-            for(auto j : i.second){
-                cout << j.first << ":" << j.second << ", ";
-            }
-        }
-        cout << endl;*/
 
         return matched_documents;
     }
