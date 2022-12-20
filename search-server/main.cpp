@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cassert>
 
 using namespace std;
 
@@ -239,6 +240,87 @@ private:
     }
 };
 
+// -------- Начало модульных тестов поисковой системы ----------
+
+// Тест проверяет, что поисковая система исключает стоп-слова при добавлении документов
+void TestExcludeStopWordsFromAddedDocumentContent() {
+    const int doc_id = 42;
+    const string content = "cat in the city"s;
+    const vector<int> ratings = {1, 2, 3};
+    // Сначала убеждаемся, что поиск слова, не входящего в список стоп-слов,
+    // находит нужный документ
+    {
+        SearchServer server;
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        const auto found_docs = server.FindTopDocuments("in"s);
+        assert(found_docs.size() == 1);
+        const Document& doc0 = found_docs[0];
+        assert(doc0.id == doc_id);
+    }
+
+    // Затем убеждаемся, что поиск этого же слова, входящего в список стоп-слов,
+    // возвращает пустой результат
+    {
+        SearchServer server;
+        server.SetStopWords("in the"s);
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        assert(server.FindTopDocuments("in"s).empty());
+    }
+}
+
+void TestFindAndAddDocument(){
+    const int doc_id_1 = 42;
+    const string content_1 = "cat in the city"s;
+    const vector<int> ratings = {1, 2, 3};
+    
+    const int doc_id_2 = 55;
+    const string content_2 = "dog in the house"s;
+    
+    {
+    SearchServer server;
+    // add one and find one document
+    server.AddDocument(doc_id_1, content_1, DocumentStatus::ACTUAL, ratings);
+    auto found_docs = server.FindTopDocuments("cat"s);
+    assert(found_docs.size() == 1);
+    assert(found_docs[0].id == doc_id_1);
+
+    // add another, find one
+    server.AddDocument(doc_id_2, content_2, DocumentStatus::ACTUAL, ratings);
+    found_docs = server.FindTopDocuments("cat"s);
+    assert(found_docs.size() == 1);
+    assert(found_docs[0].id == doc_id_1);
+
+    // find two
+    found_docs = server.FindTopDocuments("in"s);
+    assert(found_docs.size() == 2);
+    assert(found_docs[0].id == doc_id_1);
+    assert(found_docs[1].id == doc_id_2);
+    }
+
+    {
+    SearchServer server;
+    // add 10, find top five
+    for(int i = 0; i<10; ++i){
+        server.AddDocument(i, "test string"s, DocumentStatus::ACTUAL, ratings);
+    }
+    auto found_docs = server.FindTopDocuments("test"s);
+    assert(found_docs.size() == 5);
+    for(int i = 0; i<10; ++i){
+        assert(found_docs[i].id == i);
+    }
+    }
+
+}
+
+
+// Функция TestSearchServer является точкой входа для запуска тестов
+void TestSearchServer() {
+    TestExcludeStopWordsFromAddedDocumentContent();
+    TestFindAndAddDocument();
+}
+
+// --------- Окончание модульных тестов поисковой системы -----------
+
 // ==================== для примера =========================
 
 void PrintDocument(const Document& document) {
@@ -249,6 +331,8 @@ void PrintDocument(const Document& document) {
 }
 
 int main() {
+    TestSearchServer();
+
     SearchServer search_server;
     search_server.SetStopWords("и в на"s);
 
