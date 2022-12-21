@@ -110,7 +110,9 @@ public:
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query,
                                                         int document_id) const {
         const Query query = ParseQuery(raw_query);
+
         vector<string> matched_words;
+        
         for (const string& word : query.plus_words) {
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
@@ -312,11 +314,49 @@ void TestFindAndAddDocument(){
 
 }
 
+void TestMinusWords(){
+    SearchServer server;
+    const int doc_id_1 = 42;
+    const string content_1 = "cat in the city"s;
+    const vector<int> ratings = {1, 2, 3};
+    
+    const int doc_id_2 = 55;
+    const string content_2 = "dog in the house"s;
+
+    server.AddDocument(doc_id_1, content_1, DocumentStatus::ACTUAL, ratings);
+    server.AddDocument(doc_id_2, content_2, DocumentStatus::ACTUAL, ratings);
+
+    auto found_docs = server.FindTopDocuments("test -in"s);
+    assert(found_docs.size() == 0);
+
+    found_docs = server.FindTopDocuments("dog -cat"s);
+    assert(found_docs.size() == 1);
+    assert(found_docs[0].id == doc_id_2);
+
+    found_docs = server.FindTopDocuments("in -cat"s);
+    assert(found_docs.size() == 1);
+    assert(found_docs[0].id == doc_id_2);
+
+    for(int i = 0; i<10; ++i){
+        server.AddDocument(i, "test string"s, DocumentStatus::ACTUAL, ratings);
+    }
+    found_docs = server.FindTopDocuments("in -test"s);
+    assert(found_docs.size() == 2);
+    assert(found_docs[0].id == doc_id_1);
+    assert(found_docs[1].id == doc_id_2);
+
+    found_docs = server.FindTopDocuments("in -cat -test"s);
+    assert(found_docs.size() == 1);
+    assert(found_docs[0].id == doc_id_2);
+
+}
+
 
 // Функция TestSearchServer является точкой входа для запуска тестов
 void TestSearchServer() {
     TestExcludeStopWordsFromAddedDocumentContent();
     TestFindAndAddDocument();
+    TestMinusWords();
 }
 
 // --------- Окончание модульных тестов поисковой системы -----------
