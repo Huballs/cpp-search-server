@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <numeric>
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -10,6 +11,7 @@
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+const double COMPARE_TOLERANCE = 1e-6;
 
 string ReadLine() {
     string s;
@@ -114,6 +116,7 @@ public:
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
         documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
+        id_list_.push_back(document_id);
     }
 
     template <typename DocumentPredicate>
@@ -124,7 +127,7 @@ public:
 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
-                 if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                 if (abs(lhs.relevance - rhs.relevance) < COMPARE_TOLERANCE) {
                      return lhs.rating > rhs.rating;
                  } else {
                      return lhs.relevance > rhs.relevance;
@@ -182,13 +185,7 @@ public:
             return INVALID_DOCUMENT_ID;
         }
 
-        int i = 0;
-        for (auto [id, _] : documents_){
-            if (i == index)
-                return id;
-            ++i;
-        }
-        return INVALID_DOCUMENT_ID;
+        return id_list_[index];
     }
 
 private:
@@ -199,6 +196,7 @@ private:
     const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
+    vector<int> id_list_;
 
     bool IsStopWord(const string& word) const {
         return stop_words_.count(word) > 0;
@@ -218,10 +216,7 @@ private:
         if (ratings.empty()) {
             return 0;
         }
-        int rating_sum = 0;
-        for (const int rating : ratings) {
-            rating_sum += rating;
-        }
+        int rating_sum = accumulate(ratings.begin(), ratings.end(), 0);
         return rating_sum / static_cast<int>(ratings.size());
     }
 
