@@ -39,6 +39,8 @@ int SearchServer::GetDocumentCount() const {
 
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(const std::string& raw_query,
                     int document_id) const {
+    LOG_DURATION_STREAM("Operation time", std::cerr);
+
     const auto query = ParseQuery(raw_query);
 
     std::vector<std::string> matched_words;
