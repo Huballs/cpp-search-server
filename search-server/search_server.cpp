@@ -21,7 +21,7 @@ void SearchServer::AddDocument(int document_id, const std::string& document, Doc
         document_to_word_freqs_[document_id][word] += inv_word_count;
     }
     documents_.emplace(document_id, DocumentData{ComputeAverageRating(ratings), status});
-    id_list_.push_back(document_id);
+    id_list_.emplace(document_id);
 }
 
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentStatus status) const {
@@ -67,44 +67,33 @@ std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument
 
 const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const{
     auto it = document_to_word_freqs_.find(document_id);
-    if(it == document_to_word_freqs_.end()) return word_freqs_empty_;
+    if(it == document_to_word_freqs_.end()){
+        static std::map<std::string, double> word_freqs_empty;
+        return word_freqs_empty;
+    }
 
     return it->second;
 }
 
 void SearchServer::RemoveDocument(int document_id){
-    auto it = std::find(id_list_.begin(), id_list_.end(), document_id);
-    if(it != id_list_.end()){
-        id_list_.erase(it);   
+    id_list_.erase(document_id);   
 
-        std::vector<std::string> words_to_remove;
-        for(auto& [word, doc_freq] : word_to_document_freqs_){
-            auto it2 = doc_freq.find(document_id);
-            if(it2 != doc_freq.end())
-                doc_freq.erase(it2);
-            if(doc_freq.empty())
-                words_to_remove.push_back(word);
-        }
-        for(auto& word : words_to_remove){
+    for(const auto& [word, _] : document_to_word_freqs_[document_id]){
+        word_to_document_freqs_[word].erase(document_id);
+        if(word_to_document_freqs_[word].empty())
             word_to_document_freqs_.erase(word);
-        }
-        
-        auto it3 = document_to_word_freqs_.find(document_id);
-        if(it3 != document_to_word_freqs_.end())
-            document_to_word_freqs_.erase(it3);
-
-        auto it4 = documents_.find(document_id);
-        if(it4 != documents_.end())
-            documents_.erase(it4);
-        
     }
+        
+    document_to_word_freqs_.erase(document_id);
+
+    documents_.erase(document_id);   
 }
 
-std::vector<int>::const_iterator SearchServer::begin() const {
+std::set<int>::const_iterator SearchServer::begin() const {
     return id_list_.begin();
 }
 
-std::vector<int>::const_iterator SearchServer::end() const {
+std::set<int>::const_iterator SearchServer::end() const {
     return id_list_.end();
 }
 

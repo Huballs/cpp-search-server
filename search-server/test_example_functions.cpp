@@ -5,7 +5,7 @@ std::ostream& operator<<(std::ostream& stream, DocumentStatus status){
     stream << (int)status;
     return stream;
 }
-std::ostream& operator<<(std::ostream& stream, std::vector<int>::const_iterator it){
+std::ostream& operator<<(std::ostream& stream, std::set<int>::const_iterator it){
     stream << *it;
     return stream;
 }
@@ -394,8 +394,9 @@ void TestIdIterators(){
     server.AddDocument(3, text, status, rating);
     server.AddDocument(4, text, status, rating);
 
+    auto it = server.begin();
     for(int i = 0; i < 5; ++i){
-        ASSERT_EQUAL(i, *(server.begin()+i));
+        ASSERT_EQUAL(i, *(it++));
     }
 }
 
@@ -460,6 +461,11 @@ void TestRemoveDocument(){
     server.AddDocument(4, "our cat ran away with the neighbours dog"s, status, rating);
 
     auto found_docs = server.FindTopDocuments("dog"s);
+    ASSERT_EQUAL(found_docs.size(), 4);
+
+    server.RemoveDocument(10);
+
+    found_docs = server.FindTopDocuments("dog"s);
     ASSERT_EQUAL(found_docs.size(), 4);
 
     server.RemoveDocument(0);

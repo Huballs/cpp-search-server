@@ -5,7 +5,7 @@
 #include "remove_duplicates.h"
 
 std::ostream& operator<<(std::ostream& stream, DocumentStatus status);
-std::ostream& operator<<(std::ostream& stream, std::vector<int>::const_iterator it);
+std::ostream& operator<<(std::ostream& stream, std::set<int>::const_iterator it);
 std::ostream& operator<<(std::ostream& stream, std::map<std::string, double> word_freqs);
 
 template <typename F>
