@@ -64,13 +64,12 @@ std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument
     return {matched_words, documents_.at(document_id).status};
 }
 
-int SearchServer::GetDocumentId(int index) const {
-    if((index < 0) || (index > int(documents_.size()))){
-        throw std::out_of_range("ID is not valid");
-        return INVALID_DOCUMENT_ID;
-    }
+std::vector<int>::const_iterator SearchServer::begin() const {
+    return id_list_.begin();
+}
 
-    return id_list_[index];
+std::vector<int>::const_iterator SearchServer::end() const {
+    return id_list_.end();
 }
 
 bool SearchServer::IsStopWord(const std::string& word) const {

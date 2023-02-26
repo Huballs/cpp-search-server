@@ -2,8 +2,10 @@
 #include "request_queue.h"
 #include "paginator_impl.h"
 #include "read_input_functions.h"
+#include "text_example_functions.h"
 
 int main() {
+    TestSearchServer();
     SearchServer search_server("и в на"s);
 
     search_server.AddDocument(0, "белый кот и модный ошейник"s, DocumentStatus::ACTUAL, {8, -3});
@@ -55,5 +57,10 @@ int main() {
     for (const Document &document : evens_result){
         std::cout << document << std::endl;
     }
+
+    for (auto id : search_server){
+        std::cout << id << std::endl;
+    }
+
     return 0;
 }
