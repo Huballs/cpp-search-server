@@ -1,4 +1,4 @@
-#include "text_example_functions.h"
+#include "test_example_functions.h"
 
 
 std::ostream& operator<<(std::ostream& stream, DocumentStatus status){
@@ -7,6 +7,15 @@ std::ostream& operator<<(std::ostream& stream, DocumentStatus status){
 }
 std::ostream& operator<<(std::ostream& stream, std::vector<int>::const_iterator it){
     stream << *it;
+    return stream;
+}
+std::ostream& operator<<(std::ostream& stream, std::map<std::string, double> word_freqs){
+    if(word_freqs.begin() == word_freqs.end()){
+        stream << "Empty word_freqs map"s;
+    } else {
+        stream << "Map: "s << word_freqs.begin()->first << ":"s
+                << word_freqs.begin()->second << "..."s;
+    }
     return stream;
 }
 
@@ -374,6 +383,121 @@ void TestRelevancyCalculation(){
 void TestIdIterators(){
     SearchServer server("that with the and this"s);
     ASSERT_EQUAL(server.begin(), server.end());
+
+    const auto status = DocumentStatus::ACTUAL;
+    const auto rating = {1};
+    const auto text = ""s;
+
+    server.AddDocument(0, text, status, rating);
+    server.AddDocument(1, text, status, rating);
+    server.AddDocument(2, text, status, rating);
+    server.AddDocument(3, text, status, rating);
+    server.AddDocument(4, text, status, rating);
+
+    for(int i = 0; i < 5; ++i){
+        ASSERT_EQUAL(i, *(server.begin()+i));
+    }
+}
+
+void TestWordFreqs(){
+    SearchServer server("that with the and this"s);
+    const auto status = DocumentStatus::ACTUAL;
+    const auto rating = {1};
+
+    server.AddDocument(0, "gray dog"s, status, rating);
+    server.AddDocument(1, "pretty cat with gray tail"s, status, rating);
+
+    auto words_to_freqs = server.GetWordFrequencies(0);
+    ASSERT_EQUAL(words_to_freqs["gray"], 0.5f);
+    ASSERT_EQUAL(words_to_freqs["dog"], 0.5f);
+
+    words_to_freqs = server.GetWordFrequencies(1);
+    ASSERT_EQUAL(words_to_freqs["pretty"], 0.25f);
+    ASSERT_EQUAL(words_to_freqs["cat"], 0.25f);
+    ASSERT_EQUAL(words_to_freqs["gray"], 0.25f);
+    ASSERT_EQUAL(words_to_freqs["tail"], 0.25f);
+
+    words_to_freqs = server.GetWordFrequencies(2);
+    ASSERT_EQUAL(words_to_freqs, (std::map<std::string, double>{}));
+}
+
+void TestPaginator(){
+    SearchServer server("that with the and this"s);
+    const auto status = DocumentStatus::ACTUAL;
+    const auto rating = {1};
+
+    server.AddDocument(0, "gray dog"s, status, rating);
+    server.AddDocument(1, "this crazy dog bit my other dog and now its gray very gray"s, status, rating);
+    server.AddDocument(2, "pretty cat with gray tail"s, status, rating);
+    server.AddDocument(3, "this dog is not mine"s, status, rating);
+    
+    const auto search_results = server.FindTopDocuments("gray dog"s);
+    int page_size = 2;
+    const auto pages = Paginate(search_results, page_size);
+    
+    int i = 0;
+    int page_n = 0;
+    for (auto page = pages.begin(); page != pages.end(); ++page) {
+        for (auto it = page->begin(); it != page->end(); ++it) {
+            ASSERT_EQUAL(it->id, page_n+i);
+            ++i;
+        }
+        ++page_n;
+        i = 1;
+    }
+    ASSERT_EQUAL(page_n, 2);
+}
+
+void TestRemoveDocument(){
+    SearchServer server("that with the and this"s);
+    const auto status = DocumentStatus::ACTUAL;
+    const auto rating = {1};
+
+    server.AddDocument(0, "gray dog"s, status, rating);
+    server.AddDocument(1, "this crazy dog bit my other dog and now its gray very gray"s, status, rating);
+    server.AddDocument(2, "pretty cat with gray tail"s, status, rating);
+    server.AddDocument(3, "this dog is not mine"s, status, rating);
+    server.AddDocument(4, "our cat ran away with the neighbours dog"s, status, rating);
+
+    auto found_docs = server.FindTopDocuments("dog"s);
+    ASSERT_EQUAL(found_docs.size(), 4);
+
+    server.RemoveDocument(0);
+
+    found_docs = server.FindTopDocuments("dog"s);
+    ASSERT_EQUAL(found_docs.size(), 3);
+
+    server.RemoveDocument(3);
+    server.RemoveDocument(4);
+
+    found_docs = server.FindTopDocuments("dog"s);
+    ASSERT_EQUAL(found_docs.size(), 1);
+    ASSERT_EQUAL(found_docs[0].id, 1);
+}
+
+void TestRemoveDuplicates(){
+    SearchServer server("that with the and this"s);
+    const auto status = DocumentStatus::ACTUAL;
+    const auto rating = {1};
+
+    server.AddDocument(0, "gray dog"s, status, rating);
+    server.AddDocument(1, "this crazy dog bit my other dog and now its gray very gray"s, status, rating);
+    server.AddDocument(2, "pretty cat with gray tail"s, status, rating);
+    server.AddDocument(3, "this dog is not mine"s, status, rating);
+    server.AddDocument(4, "this dog is not mine"s, status, rating);
+    server.AddDocument(5, "our cat ran away with the neighbours dog"s, status, rating);
+    server.AddDocument(6, "this dog is not mine"s, status, rating);
+    server.AddDocument(7, "pretty cat with gray tail"s, status, rating);
+
+    RemoveDuplicates(server);
+
+    auto found_docs = server.FindTopDocuments("dog"s);
+
+    ASSERT_EQUAL(found_docs.size(), 4);
+    ASSERT_EQUAL(found_docs[0].id, 0);
+    ASSERT_EQUAL(found_docs[1].id, 3);
+    ASSERT_EQUAL(found_docs[2].id, 1);
+    ASSERT_EQUAL(found_docs[3].id, 5);
 }
 
 // Функция TestSearchServer является точкой входа для запуска тестов
@@ -387,4 +511,8 @@ void TestSearchServer() {
     RUN_TEST(TestStatus);
     RUN_TEST(TestRelevancyCalculation);
     RUN_TEST(TestIdIterators);
+    RUN_TEST(TestWordFreqs);
+    RUN_TEST(TestPaginator);
+    RUN_TEST(TestRemoveDocument);
+    RUN_TEST(TestRemoveDuplicates);
 }

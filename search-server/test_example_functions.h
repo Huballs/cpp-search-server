@@ -1,9 +1,13 @@
 #pragma once
 #include <iostream>
 #include "search_server.h"
+#include "paginator_impl.h"
+#include "remove_duplicates.h"
 
 std::ostream& operator<<(std::ostream& stream, DocumentStatus status);
 std::ostream& operator<<(std::ostream& stream, std::vector<int>::const_iterator it);
+std::ostream& operator<<(std::ostream& stream, std::map<std::string, double> word_freqs);
+
 template <typename F>
 void RunTestImpl(const F& func, const std::string& name);
 template <typename T, typename U>
@@ -29,4 +33,8 @@ void TestMatchCustom();
 void TestStatus();
 void TestRelevancyCalculation();
 void TestIdIterators();
+void TestWordFreqs();
+void TestPaginator();
+void TestRemoveDocument();
+
 void TestSearchServer();

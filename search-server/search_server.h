@@ -9,6 +9,7 @@
 #include <cmath>
 
 using namespace std::string_literals;
+
 const double COMPARE_TOLERANCE = 1e-6;
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
@@ -31,6 +32,8 @@ public:
     int GetDocumentCount() const;
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query,
                         int document_id) const;
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+    void RemoveDocument(int document_id);
     std::vector<int>::const_iterator begin() const;
     std::vector<int>::const_iterator end() const;
 
@@ -50,6 +53,8 @@ private:
     };
     const std::set<std::string> stop_words_;
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
+    std::map<int, std::map<std::string, double>> document_to_word_freqs_;
+    std::map<std::string, double> word_freqs_empty_;
     std::map<int, DocumentData> documents_;
     std::vector<int> id_list_;
 
@@ -65,6 +70,8 @@ private:
                                       DocumentPredicate document_predicate) const;
 };
 
+
+// ---------------------------------------------------------------- TEMPLATE FUNCTIONS ----------------------------------------------------------------
 template <typename StringContainer>
 SearchServer::SearchServer(const StringContainer& stop_words)
         :stop_words_(MakeUniqueNonEmptyStrings(stop_words)){
