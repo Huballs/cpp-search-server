@@ -5,6 +5,10 @@ std::ostream& operator<<(std::ostream& stream, DocumentStatus status){
     stream << (int)status;
     return stream;
 }
+std::ostream& operator<<(std::ostream& stream, std::vector<int>::const_iterator it){
+    stream << *it;
+    return stream;
+}
 
 template <typename F>
 void RunTestImpl(const F& func, const std::string& name) {
@@ -367,9 +371,13 @@ void TestRelevancyCalculation(){
     ASSERT(comp(found_docs[4].relevance, 0.0371906)); // doc_id_2
 }
 
+void TestIdIterators(){
+    SearchServer server("that with the and this"s);
+    ASSERT_EQUAL(server.begin(), server.end());
+}
+
 // Функция TestSearchServer является точкой входа для запуска тестов
 void TestSearchServer() {
-    std::cout << "Helllo" << std::endl;
     RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
     RUN_TEST(TestFindAndAddDocument);
     RUN_TEST(TestMinusWords);
@@ -378,4 +386,5 @@ void TestSearchServer() {
     RUN_TEST(TestMatchCustom);
     RUN_TEST(TestStatus);
     RUN_TEST(TestRelevancyCalculation);
+    RUN_TEST(TestIdIterators);
 }

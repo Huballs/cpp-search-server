@@ -6,7 +6,7 @@
 
 int main() {
     TestSearchServer();
-    SearchServer search_server("и в на"s);
+    SearchServer search_server("и в на g"s);
 
     search_server.AddDocument(0, "белый кот и модный ошейник"s, DocumentStatus::ACTUAL, {8, -3});
     search_server.AddDocument(1, "пушистый кот пушистый хвост"s, DocumentStatus::ACTUAL, {7, 2, 7});

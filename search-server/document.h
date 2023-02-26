@@ -1,8 +1,6 @@
 #pragma once
 #include <ostream>
 
-const int MAX_RESULT_DOCUMENT_COUNT = 5;
-
 struct Document {
     Document() = default;
 
