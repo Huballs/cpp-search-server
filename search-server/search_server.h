@@ -94,7 +94,6 @@ SearchServer::SearchServer(const StringContainer& stop_words)
 template <typename DocumentPredicate>
 std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query,
                                     DocumentPredicate document_predicate) const {
-    LOG_DURATION_STREAM("Operation time", std::cerr);
     
     const auto query = ParseQuery(raw_query);
     auto matched_documents = FindAllDocuments(query, document_predicate);

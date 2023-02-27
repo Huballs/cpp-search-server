@@ -11,7 +11,7 @@ void RemoveDuplicates(SearchServer& search_server){
         for(const auto& [word, _] : word_freq){
             words.push_back(word);
         }
-        const auto [_, is_inserted] =  words_to_doc.emplace(words);
+        const auto [_, is_inserted] = words_to_doc.emplace(words);
         if(!is_inserted) ids_to_remove.push_back(id);
     }
 
