@@ -1,5 +1,5 @@
 #include "test_example_functions.h"
-
+#include <cassert>
 
 std::ostream& operator<<(std::ostream& stream, DocumentStatus status){
     stream << (int)status;
@@ -18,6 +18,7 @@ std::ostream& operator<<(std::ostream& stream, std::map<std::string, double> wor
     }
     return stream;
 }
+
 
 template <typename F>
 void RunTestImpl(const F& func, const std::string& name) {
@@ -195,7 +196,7 @@ void TestSortByRelevancy(){
 
 }
 
-void TestMatchDocument(){
+void TestMatchDocumentMine(){
     SearchServer server("that with the and this"s);
     const int doc_id_1 = 42;
     const std::string content_1 = "blue cat in the city"s;
@@ -506,12 +507,85 @@ void TestRemoveDuplicates(){
     ASSERT_EQUAL(found_docs[3].id, 5);
 }
 
+
+std::string GenerateWord(std::mt19937& generator, int max_length) {
+    const int length = std::uniform_int_distribution(1, max_length)(generator);
+    std::string word;
+    word.reserve(length);
+    for (int i = 0; i < length; ++i) {
+        word.push_back(std::uniform_int_distribution('a', 'z')(generator));
+    }
+    return word;
+}
+std::vector<std::string> GenerateDictionary(std::mt19937& generator, int word_count, int max_length) {
+    std::vector<std::string> words;
+    words.reserve(word_count);
+    for (int i = 0; i < word_count; ++i) {
+        words.push_back(GenerateWord(generator, max_length));
+    }
+    std::sort(words.begin(), words.end());
+    words.erase(std::unique(words.begin(), words.end()), words.end());
+    return words;
+}
+std::string GenerateQuery(std::mt19937& generator, const std::vector<std::string>& dictionary, int max_word_count) {
+    const int word_count = std::uniform_int_distribution(1, max_word_count)(generator);
+    std::string query;
+    for (int i = 0; i < word_count; ++i) {
+        if (!query.empty()) {
+            query.push_back(' ');
+        }
+        query += dictionary[std::uniform_int_distribution<int>(0, dictionary.size() - 1)(generator)];
+    }
+    return query;
+}
+std::vector<std::string> GenerateQueries(std::mt19937& generator, const std::vector<std::string>& dictionary, int query_count, int max_word_count) {
+    std::vector<std::string> queries;
+    queries.reserve(query_count);
+    for (int i = 0; i < query_count; ++i) {
+        queries.push_back(GenerateQuery(generator, dictionary, max_word_count));
+    }
+    return queries;
+}
+template <typename QueriesProcessor>
+void Test(std::string_view mark, QueriesProcessor processor, const SearchServer& search_server, const std::vector<std::string>& queries) {
+    LOG_DURATION(mark);
+    const auto documents_lists = processor(search_server, queries);
+}
+#define TEST(processor) Test(#processor, processor, search_server, queries)
+
+std::vector<std::vector<Document>> ProcessQueriesSlow(
+    const SearchServer& search_server,
+    const std::vector<std::string>& queries){
+
+        std::vector<std::vector<Document>> result(queries.size());
+        for (const std::string& query : queries) {
+            result.push_back(search_server.FindTopDocuments(query));
+        } 
+        return result;
+}
+
+void TestProcessQueriesMine(){
+    std::mt19937 generator;
+    const auto dictionary = GenerateDictionary(generator, 2'000, 25);
+    const auto documents = GenerateQueries(generator, dictionary, 20'000, 10);
+    SearchServer search_server(dictionary[0]);
+    for (size_t i = 0; i < documents.size(); ++i) {
+        search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
+    }
+    const auto queries = GenerateQueries(generator, dictionary, 2'000, 7);
+    TEST(ProcessQueries);
+    TEST(ProcessQueriesSlow);
+    const auto fast_pq = ProcessQueries(search_server, queries);
+    const auto slow_pq = ProcessQueries(search_server, queries);
+    assert(fast_pq == slow_pq);
+}
+
 // Функция TestSearchServer является точкой входа для запуска тестов
 void TestSearchServer() {
     RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
     RUN_TEST(TestFindAndAddDocument);
     RUN_TEST(TestMinusWords);
-    RUN_TEST(TestMatchDocument);
+    RUN_TEST(TestMatchDocumentMine);
     RUN_TEST(TestRatings);
     RUN_TEST(TestMatchCustom);
     RUN_TEST(TestStatus);
@@ -521,4 +595,5 @@ void TestSearchServer() {
     RUN_TEST(TestPaginator);
     RUN_TEST(TestRemoveDocument);
     RUN_TEST(TestRemoveDuplicates);
+    RUN_TEST(TestProcessQueriesMine);
 }

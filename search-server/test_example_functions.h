@@ -3,6 +3,8 @@
 #include "search_server.h"
 #include "paginator_impl.h"
 #include "remove_duplicates.h"
+#include "process_queries.h"
+#include <random>
 
 std::ostream& operator<<(std::ostream& stream, DocumentStatus status);
 std::ostream& operator<<(std::ostream& stream, std::set<int>::const_iterator it);
@@ -27,7 +29,7 @@ void TestExcludeStopWordsFromAddedDocumentContent();
 void TestFindAndAddDocument();
 void TestMinusWords();
 void TestSortByRelevancy();
-void TestMatchDocument();
+void TestMatchDocumentMine();
 void TestRatings();
 void TestMatchCustom();
 void TestStatus();
@@ -36,5 +38,6 @@ void TestIdIterators();
 void TestWordFreqs();
 void TestPaginator();
 void TestRemoveDocument();
+void TestProcessQueriesMine();
 
 void TestSearchServer();
