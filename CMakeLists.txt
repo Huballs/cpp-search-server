@@ -15,7 +15,11 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 set (CMAKE_VERBOSE_MAKEFILE ON)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3") #g++ -ltbb  -lpthread
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic")
+
+if (UNIX)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ltbb -lpthread") 
+endif (UNIX)
 
 if(CMAKE_VERSION VERSION_LESS "3.7.0")
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
