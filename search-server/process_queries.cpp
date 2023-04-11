@@ -12,3 +12,17 @@ std::vector<std::vector<Document>> ProcessQueries(
         });
     return result;
 }
+
+std::vector<Document> ProcessQueriesJoined(
+    const SearchServer& search_server,
+    const std::vector<std::string>& queries){
+
+    const auto transformed = ProcessQueries(search_server, queries);
+
+    std::vector<Document> result;
+    result.reserve(queries.size() * 5);
+    for (const auto &docs : transformed){
+        result.insert(result.end(), docs.begin(), docs.end());
+    }
+    return result;
+    }
