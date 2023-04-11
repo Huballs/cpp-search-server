@@ -73,20 +73,30 @@ const std::map<std::string, double>& SearchServer::GetWordFrequencies(int docume
 
     return it->second;
 }
-
-void SearchServer::RemoveDocument(int document_id){
+/*
+template <typename ExecutionPolicy>
+void SearchServer::RemoveDocument(ExecutionPolicy policy, int document_id){
     id_list_.erase(document_id);   
 
+    std::vector<std::string> words;
+    words.reserve(document_to_word_freqs_[document_id].size());
+
     for(const auto& [word, _] : document_to_word_freqs_[document_id]){
-        word_to_document_freqs_[word].erase(document_id);
-        if(word_to_document_freqs_[word].empty())
-            word_to_document_freqs_.erase(word);
+        words.push_back(word);
     }
+
+    std::for_each(policy, words.begin(),
+                  words.end(),
+                   [this, &document_id](const std::string& word) {
+                        word_to_document_freqs_[word].erase(document_id);
+                        if(word_to_document_freqs_[word].empty())
+                            word_to_document_freqs_.erase(word);
+                   });
         
     document_to_word_freqs_.erase(document_id);
 
     documents_.erase(document_id);   
-}
+}*/
 
 std::set<int>::const_iterator SearchServer::begin() const {
     return id_list_.begin();
@@ -94,6 +104,10 @@ std::set<int>::const_iterator SearchServer::begin() const {
 
 std::set<int>::const_iterator SearchServer::end() const {
     return id_list_.end();
+}
+
+int SearchServer::size() const {
+    return id_list_.size();
 }
 
 bool SearchServer::IsStopWord(const std::string& word) const {

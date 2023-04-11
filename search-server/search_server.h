@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <execution>
+#include <variant>
 
 using namespace std::string_literals;
 
@@ -36,10 +38,16 @@ public:
 
     const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
-    void RemoveDocument(int document_id);
+    template <class ExecutionPolicy>
+    void RemoveDocument(ExecutionPolicy policy, int document_id);
+
+    void RemoveDocument(int document_id){
+        RemoveDocument(std::execution::seq, document_id);
+    }
 
     std::set<int>::const_iterator begin() const;
     std::set<int>::const_iterator end() const;
+    int size() const;
 
 private:
     struct DocumentData {
@@ -145,4 +153,30 @@ std::vector<Document> SearchServer::FindAllDocuments(const Query& query,
             {document_id, relevance, documents_.at(document_id).rating});
     }
     return matched_documents;
+}
+
+template <class ExecutionPolicy>
+void SearchServer::RemoveDocument(ExecutionPolicy policy, int document_id){
+    id_list_.erase(document_id);   
+
+    std::vector<std::string> words;
+    words.reserve(document_to_word_freqs_[document_id].size());
+
+    for(const auto& [word, _] : document_to_word_freqs_[document_id]){
+        words.push_back(word);
+    }
+
+
+    std::for_each(policy, words.begin(),
+                  words.end(),
+                   [this, &document_id](const std::string& word) {
+                        word_to_document_freqs_[word].erase(document_id);
+                        if(word_to_document_freqs_[word].empty())
+                            word_to_document_freqs_.erase(word);
+                   });
+
+        
+    document_to_word_freqs_.erase(document_id);
+
+    documents_.erase(document_id);   
 }

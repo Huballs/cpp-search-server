@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <execution>
 #include "search_server.h"
 #include "paginator_impl.h"
 #include "remove_duplicates.h"

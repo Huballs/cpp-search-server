@@ -468,13 +468,13 @@ void TestRemoveDocument(){
     found_docs = server.FindTopDocuments("dog"s);
     ASSERT_EQUAL(found_docs.size(), 4);
 
-    server.RemoveDocument(0);
+    server.RemoveDocument(std::execution::seq, 0);
 
     found_docs = server.FindTopDocuments("dog"s);
     ASSERT_EQUAL(found_docs.size(), 3);
 
-    server.RemoveDocument(3);
-    server.RemoveDocument(4);
+    server.RemoveDocument(std::execution::seq, 3);
+    server.RemoveDocument(std::execution::seq, 4);
 
     found_docs = server.FindTopDocuments("dog"s);
     ASSERT_EQUAL(found_docs.size(), 1);
@@ -507,7 +507,7 @@ void TestRemoveDuplicates(){
 }
 
 
-std::string GenerateWord(std::mt19937& generator, int max_length) {
+std::string GenerateWordMine(std::mt19937& generator, int max_length) {
     const int length = std::uniform_int_distribution(1, max_length)(generator);
     std::string word;
     word.reserve(length);
@@ -516,17 +516,17 @@ std::string GenerateWord(std::mt19937& generator, int max_length) {
     }
     return word;
 }
-std::vector<std::string> GenerateDictionary(std::mt19937& generator, int word_count, int max_length) {
+std::vector<std::string> GenerateDictionaryMine(std::mt19937& generator, int word_count, int max_length) {
     std::vector<std::string> words;
     words.reserve(word_count);
     for (int i = 0; i < word_count; ++i) {
-        words.push_back(GenerateWord(generator, max_length));
+        words.push_back(GenerateWordMine(generator, max_length));
     }
     std::sort(words.begin(), words.end());
     words.erase(std::unique(words.begin(), words.end()), words.end());
     return words;
 }
-std::string GenerateQuery(std::mt19937& generator, const std::vector<std::string>& dictionary, int max_word_count) {
+std::string GenerateQueryMine(std::mt19937& generator, const std::vector<std::string>& dictionary, int max_word_count) {
     const int word_count = std::uniform_int_distribution(1, max_word_count)(generator);
     std::string query;
     for (int i = 0; i < word_count; ++i) {
@@ -537,11 +537,11 @@ std::string GenerateQuery(std::mt19937& generator, const std::vector<std::string
     }
     return query;
 }
-std::vector<std::string> GenerateQueries(std::mt19937& generator, const std::vector<std::string>& dictionary, int query_count, int max_word_count) {
+std::vector<std::string> GenerateQueriesMine(std::mt19937& generator, const std::vector<std::string>& dictionary, int query_count, int max_word_count) {
     std::vector<std::string> queries;
     queries.reserve(query_count);
     for (int i = 0; i < query_count; ++i) {
-        queries.push_back(GenerateQuery(generator, dictionary, max_word_count));
+        queries.push_back(GenerateQueryMine(generator, dictionary, max_word_count));
     }
     return queries;
 }
@@ -565,13 +565,13 @@ std::vector<std::vector<Document>> ProcessQueriesSlow(
 
 void TestProcessQueriesMine(){
     std::mt19937 generator;
-    const auto dictionary = GenerateDictionary(generator, 2'000, 25);
-    const auto documents = GenerateQueries(generator, dictionary, 20'000, 10);
+    const auto dictionary = GenerateDictionaryMine(generator, 2'000, 25);
+    const auto documents = GenerateQueriesMine(generator, dictionary, 20'000, 10);
     SearchServer search_server(dictionary[0]);
     for (size_t i = 0; i < documents.size(); ++i) {
         search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});
     }
-    const auto queries = GenerateQueries(generator, dictionary, 2'000, 7);
+    const auto queries = GenerateQueriesMine(generator, dictionary, 2'000, 7);
     TEST(ProcessQueries);
     TEST(ProcessQueriesSlow);
 }
