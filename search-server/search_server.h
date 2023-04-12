@@ -200,6 +200,51 @@ SearchServer::MatchDocument(ExecutionPolicy&& policy,
 
     const auto query = ParseQuery(raw_query);
 
+    std::vector<const std::string*> words_in_document(document_to_word_freqs_.at(document_id).size());
+
+    std::transform(policy,
+        document_to_word_freqs_.at(document_id).begin(),
+        document_to_word_freqs_.at(document_id).end(),
+        words_in_document.begin(),
+        [](const auto &word){
+            return &(word.first);
+        }
+    );
+
+    const auto it = std::find_if(policy, query.minus_words.begin(),
+                            query.minus_words.end(),
+                            [&words_in_document](const auto& word){
+                                auto it = find_if(words_in_document.begin(), words_in_document.end(),// word);
+                                [&word](const std::string* word_in_document){
+                                    return (*word_in_document) == word; 
+                                }
+                                );
+                            if(it != words_in_document.end())
+                                return true;
+                            return false;
+                    }
+    );
+    if (it != query.minus_words.end())
+        return {std::vector<std::string>{}, documents_.at(document_id).status};
+
+    std::vector<const std::string*> matched_words_p(words_in_document.size());
+
+    auto it_last_copied = copy_if(policy,
+                                words_in_document.begin(),
+                                words_in_document.end(),
+                                matched_words_p.begin(),
+                                [&query](const auto *word){
+                                        if(std::find(query.plus_words.begin(), 
+                                                     query.plus_words.end(), 
+                                                     *word) 
+                                                     != query.plus_words.end())
+                                            return true;
+                                        return false;
+                                }
+    );
+    matched_words_p.resize(it_last_copied - (matched_words_p.begin()));
+
+/*
     std::vector<std::string> matched_words;
     for (const std::string& word : query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
@@ -209,6 +254,8 @@ SearchServer::MatchDocument(ExecutionPolicy&& policy,
             matched_words.push_back(word);
         }
     }
+
+
     for (const std::string& word : query.minus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
@@ -217,6 +264,18 @@ SearchServer::MatchDocument(ExecutionPolicy&& policy,
             matched_words.clear();
             break;
         }
-    }
+    }*/
+
+
+    std::vector<std::string> matched_words(matched_words_p.size());
+    std::transform(policy,
+        matched_words_p.begin(),
+        matched_words_p.end(),
+        matched_words.begin(),
+        [](const std::string* word){
+            return *word;
+        }
+        );
+
     return {matched_words, documents_.at(document_id).status};
 }
