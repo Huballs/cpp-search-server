@@ -27,19 +27,28 @@ public:
 
     template <typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(const std::string& raw_query,
-                                      DocumentPredicate document_predicate) const;
+                                           DocumentPredicate document_predicate) const;
     std::vector<Document> FindTopDocuments(const std::string& raw_query, DocumentStatus status) const;
     std::vector<Document> FindTopDocuments(const std::string& raw_query) const;
 
     int GetDocumentCount() const;
 
-    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(const std::string& raw_query,
-                        int document_id) const;
+    template <class ExecutionPolicy>
+    std::tuple<std::vector<std::string>, DocumentStatus> 
+    MatchDocument(ExecutionPolicy&& policy, 
+                  const std::string& raw_query,
+                  int document_id) const;
+
+    std::tuple<std::vector<std::string>, DocumentStatus> 
+    MatchDocument(const std::string& raw_query,
+                  int document_id) const{
+                    return MatchDocument(std::execution::seq, raw_query, document_id);
+                  };
 
     const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
     template <class ExecutionPolicy>
-    void RemoveDocument(ExecutionPolicy policy, int document_id);
+    void RemoveDocument(ExecutionPolicy&& policy, int document_id);
 
     void RemoveDocument(int document_id){
         RemoveDocument(std::execution::seq, document_id);
@@ -155,15 +164,10 @@ std::vector<Document> SearchServer::FindAllDocuments(const Query& query,
 }
 
 template <class ExecutionPolicy>
-void SearchServer::RemoveDocument(ExecutionPolicy policy, int document_id){
+void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id){
     id_list_.erase(document_id);   
 
     std::vector<const std::string*> words(document_to_word_freqs_[document_id].size());
-    //words.reserve(document_to_word_freqs_[document_id].size());
-
-    /*for(const auto& [word, _] : document_to_word_freqs_[document_id]){
-        words.push_back(word);
-    }*/
 
     std::transform(policy,
         document_to_word_freqs_[document_id].begin(),
@@ -171,50 +175,48 @@ void SearchServer::RemoveDocument(ExecutionPolicy policy, int document_id){
         words.begin(),
         [](const auto &word){
             return &(word.first);
-        });
-
-    //std::vector<std::map<std::string, std::map<int, double>>::iterator> it_to_remove(document_to_word_freqs_[document_id].size());
-
-    std::for_each(policy, words.begin(),
-                  words.end(),
-                   [this, document_id](const std::string* word) {
-                        word_to_document_freqs_[*word].erase(document_id);
-                        //if(word_to_document_freqs_[word].empty())
-                        //    word_to_document_freqs_.erase(word);
-                        //auto it = word_to_document_freqs_.find(*word);
-                        //if(it != word_to_document_freqs_.end()){
-                            //it_to_remove.push_back(it);
-                            //word_to_document_freqs_.at(*word).erase(document_id);
-                            //it->second.erase(document_id);
-                            //if(word_to_document_freqs_.at(*word).empty())
-                            //if(it->second.empty())
-                                //word_to_document_freqs_.erase(*word);
-                             //   word_to_document_freqs_.erase(it);
-                        //}
-                   });
-/*
-            std::transform(policy,
-                words.begin(),
-                words.end(),
-                it_to_remove.begin(),
-                [this](auto word) {
-                    return word_to_document_freqs_.find(*word);
-                });*/
-/*
-    for(auto it : it_to_remove){
-        if(it != word_to_document_freqs_.end()){
-            it->second.erase(document_id);
-            if(it->second.empty())
-                word_to_document_freqs_.erase(it);
         }
-    }*/
+    );
 
-    /*for(auto it : it_to_remove){
-        if(it->second.empty())
-            word_to_document_freqs_.erase(it);
-    }*/
+    std::for_each(policy, words.begin(), words.end(),
+        [this, document_id](const std::string* word) {
+            word_to_document_freqs_[*word].erase(document_id);
+        }
+    );
         
     document_to_word_freqs_.erase(document_id);
 
     documents_.erase(document_id);   
+}
+
+template <class ExecutionPolicy>
+std::tuple<std::vector<std::string>, DocumentStatus> 
+SearchServer::MatchDocument(ExecutionPolicy&& policy, 
+                            const std::string& raw_query,
+                            int document_id) const{
+
+    if(!id_list_.count(document_id))
+        throw std::out_of_range("ID doesn't exist");
+
+    const auto query = ParseQuery(raw_query);
+
+    std::vector<std::string> matched_words;
+    for (const std::string& word : query.plus_words) {
+        if (word_to_document_freqs_.count(word) == 0) {
+            continue;
+        }
+        if (word_to_document_freqs_.at(word).count(document_id)) {
+            matched_words.push_back(word);
+        }
+    }
+    for (const std::string& word : query.minus_words) {
+        if (word_to_document_freqs_.count(word) == 0) {
+            continue;
+        }
+        if (word_to_document_freqs_.at(word).count(document_id)) {
+            matched_words.clear();
+            break;
+        }
+    }
+    return {matched_words, documents_.at(document_id).status};
 }
