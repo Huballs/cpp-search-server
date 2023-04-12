@@ -47,7 +47,6 @@ public:
 
     std::set<int>::const_iterator begin() const;
     std::set<int>::const_iterator end() const;
-    int size() const;
 
 private:
     struct DocumentData {
@@ -170,8 +169,11 @@ void SearchServer::RemoveDocument(ExecutionPolicy policy, int document_id){
     std::for_each(policy, words.begin(),
                   words.end(),
                    [this, &document_id](const std::string& word) {
-                        word_to_document_freqs_[word].erase(document_id);
-                        if(word_to_document_freqs_[word].empty())
+                        //word_to_document_freqs_[word].erase(document_id);
+                        //if(word_to_document_freqs_[word].empty())
+                        //    word_to_document_freqs_.erase(word);
+                        word_to_document_freqs_.at(word).erase(document_id);
+                        if(word_to_document_freqs_.at(word).empty())
                             word_to_document_freqs_.erase(word);
                    });
 
