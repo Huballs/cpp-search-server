@@ -158,25 +158,61 @@ template <class ExecutionPolicy>
 void SearchServer::RemoveDocument(ExecutionPolicy policy, int document_id){
     id_list_.erase(document_id);   
 
-    std::vector<std::string> words;
-    words.reserve(document_to_word_freqs_[document_id].size());
+    std::vector<const std::string*> words(document_to_word_freqs_[document_id].size());
+    //words.reserve(document_to_word_freqs_[document_id].size());
 
-    for(const auto& [word, _] : document_to_word_freqs_[document_id]){
+    /*for(const auto& [word, _] : document_to_word_freqs_[document_id]){
         words.push_back(word);
-    }
+    }*/
 
+    std::transform(policy,
+        document_to_word_freqs_[document_id].begin(),
+        document_to_word_freqs_[document_id].end(),
+        words.begin(),
+        [](const auto &word){
+            return &(word.first);
+        });
+
+    //std::vector<std::map<std::string, std::map<int, double>>::iterator> it_to_remove(document_to_word_freqs_[document_id].size());
 
     std::for_each(policy, words.begin(),
                   words.end(),
-                   [this, &document_id](const std::string& word) {
-                        //word_to_document_freqs_[word].erase(document_id);
+                   [this, document_id](const std::string* word) {
+                        word_to_document_freqs_[*word].erase(document_id);
                         //if(word_to_document_freqs_[word].empty())
                         //    word_to_document_freqs_.erase(word);
-                        word_to_document_freqs_.at(word).erase(document_id);
-                        if(word_to_document_freqs_.at(word).empty())
-                            word_to_document_freqs_.erase(word);
+                        //auto it = word_to_document_freqs_.find(*word);
+                        //if(it != word_to_document_freqs_.end()){
+                            //it_to_remove.push_back(it);
+                            //word_to_document_freqs_.at(*word).erase(document_id);
+                            //it->second.erase(document_id);
+                            //if(word_to_document_freqs_.at(*word).empty())
+                            //if(it->second.empty())
+                                //word_to_document_freqs_.erase(*word);
+                             //   word_to_document_freqs_.erase(it);
+                        //}
                    });
+/*
+            std::transform(policy,
+                words.begin(),
+                words.end(),
+                it_to_remove.begin(),
+                [this](auto word) {
+                    return word_to_document_freqs_.find(*word);
+                });*/
+/*
+    for(auto it : it_to_remove){
+        if(it != word_to_document_freqs_.end()){
+            it->second.erase(document_id);
+            if(it->second.empty())
+                word_to_document_freqs_.erase(it);
+        }
+    }*/
 
+    /*for(auto it : it_to_remove){
+        if(it->second.empty())
+            word_to_document_freqs_.erase(it);
+    }*/
         
     document_to_word_freqs_.erase(document_id);
 
