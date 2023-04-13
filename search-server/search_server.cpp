@@ -5,6 +5,84 @@ SearchServer::SearchServer(const std::string& stop_words_text)
         SplitIntoWords(stop_words_text)){  // Invoke delegating constructor from string container
 }
 
+std::tuple<std::vector<std::string>, DocumentStatus> 
+SearchServer::MatchDocument(std::execution::parallel_policy policy, 
+                const std::string& raw_query,
+                int document_id) const{
+
+    if(!id_list_.count(document_id))
+        throw std::out_of_range("ID doesn't exist");
+
+    const auto query = ParseQuery(raw_query);   
+/*
+    std::vector<std::string> plus_words(
+                            query.plus_words.begin(),//std::make_move_iterator(query.plus_words.begin()),
+                            query.plus_words.end()//std::make_move_iterator(query.plus_words.end())
+                         );
+    std::vector<std::string> minus_words(
+                            query.minus_words.begin(),//std::make_move_iterator(query.minus_words.begin()),
+                            query.minus_words.end()//std::make_move_iterator(query.minus_words.end())
+                         );
+*/
+    auto if_minus_word =
+    std::any_of(policy, query.minus_words.begin(),
+                query.minus_words.end(),
+                [this, &document_id](const std::string& word){
+                    return document_to_word_freqs_.at(document_id).count(word);
+                }              
+    );
+    //if(it_minus_word != minus_words.end())
+    if(if_minus_word)
+        return {std::vector<std::string>{}, documents_.at(document_id).status};
+
+    std::vector<std::string> matched_words(query.plus_words.size());
+
+    auto it_matched_max =
+    std::copy_if(policy, query.plus_words.begin(),
+                query.plus_words.end(),
+                matched_words.begin(),
+                [this, &document_id](const std::string& word){
+                    return document_to_word_freqs_.at(document_id).count(word);
+                }
+    );
+    matched_words.resize(it_matched_max - matched_words.begin());
+
+    return {matched_words, documents_.at(document_id).status};
+}
+
+std::tuple<std::vector<std::string>, DocumentStatus> 
+SearchServer::MatchDocument(const std::string& raw_query,
+                int document_id) const{
+
+    if(!id_list_.count(document_id))
+        throw std::out_of_range("ID doesn't exist");
+
+    const auto query = ParseQuery(raw_query);
+
+    for (const std::string& word : query.minus_words) {
+        if (word_to_document_freqs_.count(word) == 0) {
+            continue;
+        }
+        if (word_to_document_freqs_.at(word).count(document_id)) {
+            //matched_words.clear();
+            //break;
+            return {std::vector<std::string>{}, documents_.at(document_id).status};
+        }
+    }
+
+    std::vector<std::string> matched_words;
+    for (const std::string& word : query.plus_words) {
+        if (word_to_document_freqs_.count(word) == 0) {
+            continue;
+        }
+        if (word_to_document_freqs_.at(word).count(document_id)) {
+            matched_words.push_back(word);
+        }
+    }
+
+    return {matched_words, documents_.at(document_id).status};
+}
+
 void SearchServer::AddDocument(int document_id, const std::string& document, DocumentStatus status,
                     const std::vector<int>& ratings) {
     if (document_id < 0)
@@ -102,6 +180,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(std::string text) const {
 
 SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
     Query query;
+    
     for (const std::string& word : SplitIntoWords(text)) {
         const auto query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
@@ -120,5 +199,3 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
 double SearchServer::ComputeWordInverseDocumentFreq(const std::string& word) const {
     return std::log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
 }
-
-
