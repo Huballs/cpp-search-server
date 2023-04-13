@@ -73,8 +73,8 @@ private:
         bool is_stop;
     };
     struct Query {
-        std::set<std::string> plus_words;
-        std::set<std::string> minus_words;
+        std::vector<std::string> plus_words;
+        std::vector<std::string> minus_words;
     };
 
     const std::set<std::string> stop_words_;

@@ -13,17 +13,8 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
     if(!id_list_.count(document_id))
         throw std::out_of_range("ID doesn't exist");
 
-    const auto query = ParseQuery(raw_query);   
-/*
-    std::vector<std::string> plus_words(
-                            query.plus_words.begin(),//std::make_move_iterator(query.plus_words.begin()),
-                            query.plus_words.end()//std::make_move_iterator(query.plus_words.end())
-                         );
-    std::vector<std::string> minus_words(
-                            query.minus_words.begin(),//std::make_move_iterator(query.minus_words.begin()),
-                            query.minus_words.end()//std::make_move_iterator(query.minus_words.end())
-                         );
-*/
+    auto query = ParseQuery(raw_query);   
+
     auto if_minus_word =
     std::any_of(policy, query.minus_words.begin(),
                 query.minus_words.end(),
@@ -35,11 +26,17 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
     if(if_minus_word)
         return {std::vector<std::string>{}, documents_.at(document_id).status};
 
-    std::vector<std::string> matched_words(query.plus_words.size());
+    std::sort(policy, query.plus_words.begin(),
+                        query.plus_words.end());
+    auto last_plus_word = std::unique(policy, query.plus_words.begin(),
+                                                query.plus_words.end());
+    
+
+    std::vector<std::string> matched_words(last_plus_word - query.plus_words.begin());
 
     auto it_matched_max =
     std::copy_if(policy, query.plus_words.begin(),
-                query.plus_words.end(),
+                last_plus_word,
                 matched_words.begin(),
                 [this, &document_id](const std::string& word){
                     return document_to_word_freqs_.at(document_id).count(word);
@@ -185,9 +182,11 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
         const auto query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
-                query.minus_words.insert(query_word.data);
+                //query.minus_words.insert(query_word.data);
+                query.minus_words.push_back(query_word.data);
             } else {
-                query.plus_words.insert(query_word.data);
+                //query.plus_words.insert(query_word.data);
+                query.plus_words.push_back(query_word.data);
             }
         }
     }
