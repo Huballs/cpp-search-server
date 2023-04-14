@@ -60,16 +60,17 @@ void AssertImpl(bool value, const std::string& expr_str, const std::string& file
 
 // Тест проверяет, что поисковая система исключает стоп-слова при добавлении документов
 void TestExcludeStopWordsFromAddedDocumentContent() {
+    using namespace std::string_view_literals;
     const int doc_id = 42;
-    const std::string content = "cat in the city"s;
+    const std::string content = "cat in the city";
     const std::vector<int> ratings = {1, 2, 3};
     // Сначала убеждаемся, что поиск слова, не входящего в список стоп-слов,
     // находит нужный документ
     {
-        SearchServer server("that with the and this"s);
+        SearchServer server("that with the and this"sv);
         //SearchServer server(std::vector<std::string>{"that", "with", "the", "and", "this"});
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-        const auto found_docs = server.FindTopDocuments("in"s);
+        const auto found_docs = server.FindTopDocuments("in"sv);
         ASSERT_EQUAL(found_docs.size(), 1);
         const Document& doc0 = found_docs[0];
         ASSERT_EQUAL(doc0.id, doc_id);
@@ -78,10 +79,9 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
     // Затем убеждаемся, что поиск этого же слова, входящего в список стоп-слов,
     // возвращает пустой результат
     {
-        using namespace std::string_view_literals;
         SearchServer server("that with the and this"sv);
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-        ASSERT(server.FindTopDocuments("the").empty());
+        ASSERT(server.FindTopDocuments("the"sv).empty());
     }
 }
 
@@ -219,7 +219,7 @@ void TestMatchDocumentMine(){
     ASSERT_EQUAL(matched_words[2], "in"s);
     }
     {
-    auto [matched_words, status] = server.MatchDocument("in gray dog and white parrot"s, doc_id_1);
+    auto [matched_words, status] = server.MatchDocument(std::execution::par,"in gray dog and white parrot"s, doc_id_1);
     ASSERT_EQUAL(status, status_1);
     ASSERT_EQUAL(matched_words.size(), 1);
     ASSERT_EQUAL(matched_words[0], "in"s);

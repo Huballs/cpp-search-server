@@ -15,9 +15,9 @@ SearchServer::SearchServer(const char* stop_words_text)
         SplitIntoWords(stop_words_text)){
 }
 
-std::tuple<std::vector<std::string>, DocumentStatus> 
+std::tuple<std::vector<std::string_view>, DocumentStatus> 
 SearchServer::MatchDocument(std::execution::parallel_policy policy, 
-                const std::string& raw_query,
+                const std::string_view raw_query,
                 int document_id) const{
 
     if(!id_list_.count(document_id))
@@ -34,7 +34,7 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
     );
 
     if(is_minus_word)
-        return {std::vector<std::string>{}, documents_.at(document_id).status};
+        return {std::vector<std::string_view>{}, documents_.at(document_id).status};
 
     std::sort(policy, query.plus_words.begin(),
                         query.plus_words.end());
@@ -42,7 +42,7 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
                                                 query.plus_words.end());
     
 
-    std::vector<std::string> matched_words(last_plus_word - query.plus_words.begin());
+    std::vector<std::string_view> matched_words(last_plus_word - query.plus_words.begin());
 
     auto it_matched_max =
     std::copy_if(policy, query.plus_words.begin(),
@@ -57,8 +57,8 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
     return {matched_words, documents_.at(document_id).status};
 }
 
-std::tuple<std::vector<std::string>, DocumentStatus> 
-SearchServer::MatchDocument(const std::string& raw_query,
+std::tuple<std::vector<std::string_view>, DocumentStatus> 
+SearchServer::MatchDocument(const std::string_view raw_query,
                 int document_id) const{
 
     if(!id_list_.count(document_id))
@@ -71,11 +71,11 @@ SearchServer::MatchDocument(const std::string& raw_query,
             continue;
         }
         if (word_to_document_freqs_.at(word).count(document_id)) {
-            return {std::vector<std::string>{}, documents_.at(document_id).status};
+            return {std::vector<std::string_view>{}, documents_.at(document_id).status};
         }
     }
 
-    std::vector<std::string> matched_words;
+    std::vector<std::string_view> matched_words;
     for (const std::string& word : query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
@@ -88,7 +88,15 @@ SearchServer::MatchDocument(const std::string& raw_query,
     return {matched_words, documents_.at(document_id).status};
 }
 
-void SearchServer::AddDocument(int document_id, const std::string& document, DocumentStatus status,
+std::tuple<std::vector<std::string_view>, DocumentStatus> 
+SearchServer::MatchDocument(std::execution::sequenced_policy policy, 
+        const std::string_view raw_query,
+        int document_id) const{
+            
+        return MatchDocument(raw_query, document_id);
+}
+
+void SearchServer::AddDocument(int document_id, const std::string_view document, DocumentStatus status,
                     const std::vector<int>& ratings) {
     if (document_id < 0)
         throw std::invalid_argument("Negative ID"s);
@@ -107,13 +115,13 @@ void SearchServer::AddDocument(int document_id, const std::string& document, Doc
     id_list_.emplace(document_id);
 }
 
-std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentStatus status) const {
+std::vector<Document> SearchServer::FindTopDocuments(const std::string_view raw_query, DocumentStatus status) const {
     return FindTopDocuments(
         raw_query, [status](int document_id, DocumentStatus document_status, int rating) {
             return document_status == status;});
 }
 
-std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query) const {
+std::vector<Document> SearchServer::FindTopDocuments(const std::string_view raw_query) const {
     return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
 
@@ -143,7 +151,7 @@ bool SearchServer::IsStopWord(const std::string& word) const {
     return stop_words_.count(word) > 0;
 }
 
-std::vector<std::string> SearchServer::SplitIntoWordsNoStop(const std::string& text) const {
+std::vector<std::string> SearchServer::SplitIntoWordsNoStop(const std::string_view text) const {
     std::vector<std::string> words;
     for (const std::string& word : SplitIntoWords(text)) {
         if (!IsStopWord(word)) {
@@ -161,7 +169,7 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     return rating_sum / static_cast<int>(ratings.size());
 }
 
-[[nodiscard]] bool SearchServer::IsValidWord(const std::string& word) {
+[[nodiscard]] bool SearchServer::IsValidWord(const std::string_view word) {
     // A valid word must not contain special characters
     return std::none_of(word.begin(), word.end(), [](char c) {
         return c >= 0 && c < 32;
@@ -183,7 +191,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(std::string text) const {
     return {text, is_minus, IsStopWord(text)};
 }
 
-SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
+SearchServer::Query SearchServer::ParseQuery(const std::string_view text) const {
     Query query;
     
     for (const std::string& word : SplitIntoWords(text)) {
@@ -200,7 +208,7 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
     return query;
 }
 
-SearchServer::QueryPar SearchServer::ParseQueryParallel(const std::string& text) const {
+SearchServer::QueryPar SearchServer::ParseQueryParallel(const std::string_view text) const {
     QueryPar query;
     
     for (const std::string& word : SplitIntoWords(text)) {
