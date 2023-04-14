@@ -17,10 +17,10 @@ private:
 
     struct QueryResult {
         QueryResult(const std::string raw_query, std::vector<Document> result) 
-            : raw_query(raw_query), result(result) {}
+            : raw_query_(raw_query), result_(result) {}
 
-        const std::string raw_query;
-        std::vector<Document> result;
+        const std::string raw_query_;
+        std::vector<Document> result_;
     };
     std::deque<QueryResult> requests_;
     const static int min_in_day_ = 1440;

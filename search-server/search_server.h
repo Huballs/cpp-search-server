@@ -8,7 +8,7 @@
 #include <numeric>
 #include <cmath>
 #include <execution>
-#include <variant>
+#include <string_view>
 
 using namespace std::string_literals;
 
@@ -20,7 +20,9 @@ public:
 
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words);
+    explicit SearchServer(const std::string_view stop_words_text);
     explicit SearchServer(const std::string& stop_words_text);
+    explicit SearchServer(const char* stop_words_text);
 
     void AddDocument(int document_id, const std::string& document, DocumentStatus status,
                      const std::vector<int>& ratings);
@@ -107,11 +109,11 @@ private:
 };
 
 
-// ---------------------------------------------------------------- TEMPLATE FUNCTIONS ----------------------------------------------------------------
+// ------------------------------------------------- TEMPLATE FUNCTIONS -----------------------------------------------------//
 template <typename StringContainer>
 SearchServer::SearchServer(const StringContainer& stop_words)
         :stop_words_(MakeUniqueNonEmptyStrings(stop_words)){
-
+            
     for (const auto& word : stop_words_){
         if(!IsValidWord(word))
             throw std::invalid_argument("Invalid word: "s + word);

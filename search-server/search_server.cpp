@@ -1,8 +1,18 @@
 #include "search_server.h"
 
+SearchServer::SearchServer(const std::string_view stop_words_text)
+    : SearchServer(
+        SplitIntoWords(stop_words_text)){
+}
+
 SearchServer::SearchServer(const std::string& stop_words_text)
     : SearchServer(
-        SplitIntoWords(stop_words_text)){  // Invoke delegating constructor from string container
+        SplitIntoWords(stop_words_text)){
+}
+
+SearchServer::SearchServer(const char* stop_words_text)
+    : SearchServer(
+        SplitIntoWords(stop_words_text)){
 }
 
 std::tuple<std::vector<std::string>, DocumentStatus> 

@@ -11,7 +11,7 @@ int RequestQueue::GetNoResultRequests() const {
 
 void RequestQueue::putInQueue(const std::string& raw_query, const std::vector<Document>& result) {
     if(requests_.size() >= min_in_day_){
-        if(requests_.front().result.empty())
+        if(requests_.front().result_.empty())
             --empty_result_count_;
         requests_.pop_front();
     }

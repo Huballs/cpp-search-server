@@ -1,5 +1,4 @@
 #include "remove_duplicates.h"
-#include <set>
 
 void RemoveDuplicates(SearchServer& search_server){
     std::set<std::vector<std::string>> words_to_doc;

@@ -67,6 +67,7 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
     // находит нужный документ
     {
         SearchServer server("that with the and this"s);
+        //SearchServer server(std::vector<std::string>{"that", "with", "the", "and", "this"});
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
         const auto found_docs = server.FindTopDocuments("in"s);
         ASSERT_EQUAL(found_docs.size(), 1);
@@ -77,9 +78,9 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
     // Затем убеждаемся, что поиск этого же слова, входящего в список стоп-слов,
     // возвращает пустой результат
     {
-        SearchServer server("that with the and this"s);
+        SearchServer server("that with the and this");
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-        ASSERT(server.FindTopDocuments("the"s).empty());
+        ASSERT(server.FindTopDocuments("the").empty());
     }
 }
 
