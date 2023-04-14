@@ -78,7 +78,8 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
     // Затем убеждаемся, что поиск этого же слова, входящего в список стоп-слов,
     // возвращает пустой результат
     {
-        SearchServer server("that with the and this");
+        using namespace std::string_view_literals;
+        SearchServer server("that with the and this"sv);
         server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
         ASSERT(server.FindTopDocuments("the").empty());
     }
