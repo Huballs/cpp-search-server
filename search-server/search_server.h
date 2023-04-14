@@ -20,7 +20,7 @@ public:
 
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words);
-    explicit SearchServer(const std::string_view stop_words_text);
+    explicit SearchServer(std::string_view stop_words_text);
     explicit SearchServer(const std::string& stop_words_text);
     explicit SearchServer(const char* stop_words_text);
 
@@ -93,7 +93,7 @@ private:
 
     static int ComputeAverageRating(const std::vector<int>& ratings);
 
-    QueryWord ParseQueryWord(std::string text) const;
+    QueryWord ParseQueryWord(std::string&text) const;
 
     SearchServer::Query ParseQuery(const std::string_view text) const;
     SearchServer::QueryPar ParseQueryParallel(const std::string_view text) const;

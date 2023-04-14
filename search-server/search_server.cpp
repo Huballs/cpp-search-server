@@ -1,6 +1,6 @@
 #include "search_server.h"
 
-SearchServer::SearchServer(const std::string_view stop_words_text)
+SearchServer::SearchServer(std::string_view stop_words_text)
     : SearchServer(
         SplitIntoWords(stop_words_text)){
 }
@@ -50,7 +50,7 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
                 matched_words.begin(),
                 [this, &document_id](const std::string& word){
                     return document_to_word_freqs_.at(document_id).count(word);
-                }
+                }       
     );
     matched_words.resize(it_matched_max - matched_words.begin());
 
@@ -77,11 +77,11 @@ SearchServer::MatchDocument(const std::string_view raw_query,
 
     std::vector<std::string_view> matched_words;
     for (const std::string& word : query.plus_words) {
-        if (word_to_document_freqs_.count(word) == 0) {
-            continue;
-        }
-        if (word_to_document_freqs_.at(word).count(document_id)) {
-            matched_words.push_back(word);
+        auto it = word_to_document_freqs_.find(word);
+        if(it != word_to_document_freqs_.end()){
+            if(it->second.count(document_id)){
+                matched_words.push_back(it->first);
+            }
         }
     }
 
@@ -176,7 +176,7 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     });
 }
 
-SearchServer::QueryWord SearchServer::ParseQueryWord(std::string text) const {
+SearchServer::QueryWord SearchServer::ParseQueryWord(std::string& text) const {
     bool is_minus = false;
     // Word shouldn't be empty
     if (text[0] == '-') {
@@ -194,7 +194,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(std::string text) const {
 SearchServer::Query SearchServer::ParseQuery(const std::string_view text) const {
     Query query;
     
-    for (const std::string& word : SplitIntoWords(text)) {
+    for (std::string& word : SplitIntoWords(text)) {
         const auto query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
@@ -210,8 +210,9 @@ SearchServer::Query SearchServer::ParseQuery(const std::string_view text) const 
 
 SearchServer::QueryPar SearchServer::ParseQueryParallel(const std::string_view text) const {
     QueryPar query;
-    
-    for (const std::string& word : SplitIntoWords(text)) {
+    query.plus_words.reserve(500);
+    query.minus_words.reserve(500);
+    for (std::string& word : SplitIntoWords(text)) {
         const auto query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
@@ -221,7 +222,8 @@ SearchServer::QueryPar SearchServer::ParseQueryParallel(const std::string_view t
             }
         }
     }
-    
+    query.plus_words.shrink_to_fit();
+    query.minus_words.shrink_to_fit();
     return query;
 }
 
