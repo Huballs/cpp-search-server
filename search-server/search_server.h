@@ -73,6 +73,10 @@ private:
         bool is_stop;
     };
     struct Query {
+        std::set<std::string> plus_words;
+        std::set<std::string> minus_words;
+    };
+    struct QueryPar {
         std::vector<std::string> plus_words;
         std::vector<std::string> minus_words;
     };
@@ -93,6 +97,7 @@ private:
     QueryWord ParseQueryWord(std::string text) const;
 
     SearchServer::Query ParseQuery(const std::string& text) const;
+    SearchServer::QueryPar ParseQueryParallel(const std::string& text) const;
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 

@@ -13,17 +13,17 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
     if(!id_list_.count(document_id))
         throw std::out_of_range("ID doesn't exist");
 
-    auto query = ParseQuery(raw_query);   
+    auto query = ParseQueryParallel(raw_query);   
 
-    auto if_minus_word =
+    auto is_minus_word =
     std::any_of(policy, query.minus_words.begin(),
                 query.minus_words.end(),
                 [this, &document_id](const std::string& word){
                     return document_to_word_freqs_.at(document_id).count(word);
                 }              
     );
-    //if(it_minus_word != minus_words.end())
-    if(if_minus_word)
+
+    if(is_minus_word)
         return {std::vector<std::string>{}, documents_.at(document_id).status};
 
     std::sort(policy, query.plus_words.begin(),
@@ -61,24 +61,21 @@ SearchServer::MatchDocument(const std::string& raw_query,
             continue;
         }
         if (word_to_document_freqs_.at(word).count(document_id)) {
-            //matched_words.clear();
-            //break;
             return {std::vector<std::string>{}, documents_.at(document_id).status};
         }
     }
 
-    std::set<std::string> matched_words;
+    std::vector<std::string> matched_words;
     for (const std::string& word : query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
         if (word_to_document_freqs_.at(word).count(document_id)) {
-            matched_words.insert(word);
+            matched_words.push_back(word);
         }
     }
 
-    return {std::vector<std::string>(matched_words.begin(), matched_words.end()), 
-            documents_.at(document_id).status};
+    return {matched_words, documents_.at(document_id).status};
 }
 
 void SearchServer::AddDocument(int document_id, const std::string& document, DocumentStatus status,
@@ -183,10 +180,25 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
         const auto query_word = ParseQueryWord(word);
         if (!query_word.is_stop) {
             if (query_word.is_minus) {
-                //query.minus_words.insert(query_word.data);
+                query.minus_words.insert(query_word.data);
+            } else {
+                query.plus_words.insert(query_word.data);
+            }
+        }
+    }
+    
+    return query;
+}
+
+SearchServer::QueryPar SearchServer::ParseQueryParallel(const std::string& text) const {
+    QueryPar query;
+    
+    for (const std::string& word : SplitIntoWords(text)) {
+        const auto query_word = ParseQueryWord(word);
+        if (!query_word.is_stop) {
+            if (query_word.is_minus) {
                 query.minus_words.push_back(query_word.data);
             } else {
-                //query.plus_words.insert(query_word.data);
                 query.plus_words.push_back(query_word.data);
             }
         }
