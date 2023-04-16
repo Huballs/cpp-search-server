@@ -8,7 +8,7 @@ std::ostream& operator<<(std::ostream& stream, std::set<int>::const_iterator it)
     stream << *it;
     return stream;
 }
-std::ostream& operator<<(std::ostream& stream, std::map<std::string, double> word_freqs){
+std::ostream& operator<<(std::ostream& stream, std::map<std::string_view, double> word_freqs){
     if(word_freqs.begin() == word_freqs.end()){
         stream << "Empty word_freqs map"s;
     } else {
@@ -421,7 +421,7 @@ void TestWordFreqs(){
     ASSERT_EQUAL(words_to_freqs["tail"], 0.25f);
 
     words_to_freqs = server.GetWordFrequencies(2);
-    ASSERT_EQUAL(words_to_freqs, (std::map<std::string, double>{}));
+    ASSERT_EQUAL(words_to_freqs, (std::map<std::string_view, double>{}));
 }
 
 void TestPaginator(){
