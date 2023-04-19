@@ -211,7 +211,8 @@ void TestMatchDocumentMine(){
     server.AddDocument(doc_id_1, content_1, status_1, ratings);
     server.AddDocument(doc_id_2, content_2, status_2, ratings);
     {
-    auto [matched_words, status] = server.MatchDocument("in gray dog and white parrot"s, doc_id_2);
+        std::string str = "in gray dog and white parrot"s;
+    auto [matched_words, status] = server.MatchDocument(std::execution::par,str , doc_id_2);
     ASSERT_EQUAL(matched_words.size(), 3);
     ASSERT_EQUAL(status, status_2);
     ASSERT_EQUAL(matched_words[0], "dog"s);

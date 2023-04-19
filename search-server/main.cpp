@@ -63,9 +63,10 @@ void Test(string_view mark, const SearchServer& search_server, const vector<stri
 #define TEST(policy) Test(#policy, search_server, queries, execution::policy)
 
 int main() {
+    TestSearchServer();
     mt19937 generator;
     const auto dictionary = GenerateDictionary(generator, 1000, 10);
-    const auto documents = GenerateQueries(generator, dictionary, 10'000, 70);
+    const auto documents = GenerateQueries(generator, dictionary, 4'000, 70);
     SearchServer search_server(dictionary[0]);
     for (size_t i = 0; i < documents.size(); ++i) {
         search_server.AddDocument(i, documents[i], DocumentStatus::ACTUAL, {1, 2, 3});

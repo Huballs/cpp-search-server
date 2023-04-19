@@ -128,7 +128,7 @@ std::vector<Document> SearchServer::FindTopDocuments(ExecutionPolicy&& policy, s
     const auto query = ParseQuerySorted(raw_query);
     auto matched_documents = FindAllDocuments(query, document_predicate);
 
-    sort(matched_documents.begin(), matched_documents.end(),
+    sort(policy, matched_documents.begin(), matched_documents.end(),
             [](const Document& lhs, const Document& rhs) {
                 if (std::abs(lhs.relevance - rhs.relevance) < COMPARE_TOLERANCE) {
                     return lhs.rating > rhs.rating;
@@ -163,7 +163,9 @@ SearchServer::FindTopDocuments(ExecutionPolicy&& policy, std::string_view raw_qu
 template <typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(const Query& query,
                                     DocumentPredicate document_predicate) const {
+
     std::map<int, double> document_to_relevance;
+    
     for (std::string_view word : query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
