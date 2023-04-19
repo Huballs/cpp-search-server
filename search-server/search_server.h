@@ -155,7 +155,7 @@ template <typename ExecutionPolicy>
 std::vector<Document> 
 SearchServer::FindTopDocuments(ExecutionPolicy&& policy, std::string_view raw_query, DocumentStatus status) const{
 
-    return FindTopDocuments(std::execution::seq,
+    return FindTopDocuments(policy,
             raw_query, 
             [status](int document_id, DocumentStatus document_status, int rating) {
                   return document_status == status;
