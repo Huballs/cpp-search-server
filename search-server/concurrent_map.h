@@ -17,7 +17,7 @@ public:
         Value& ref_to_value;
     };
 
-    explicit ConcurrentMap(size_t bucket_count) : mutexMapVector(bucket_count) {}
+    explicit ConcurrentMap(size_t bucket_count) : buckets_(bucket_count) {}
 
     Access operator[](const Key& key) {
         auto& s = buckets_[static_cast<uint64_t>(key) % buckets_.size()];

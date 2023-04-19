@@ -9,6 +9,7 @@
 #include <cmath>
 #include <execution>
 #include <string_view>
+#include "concurrent_map.h"
 
 using namespace std::string_literals;
 
@@ -164,7 +165,8 @@ template <typename ExecutionPolicy, typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(ExecutionPolicy&& policy, const Query& query,
                                                      DocumentPredicate document_predicate) const{
 
-    std::map<int, double> document_to_relevance;
+    //std::map<int, double> document_to_relevance;
+    ConcurrentMap<int, double> document_to_relevance(4);
     /*
     for (std::string_view word : query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
