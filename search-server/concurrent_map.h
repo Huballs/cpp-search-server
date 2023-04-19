@@ -20,8 +20,14 @@ public:
     explicit ConcurrentMap(size_t bucket_count) : buckets_(bucket_count) {}
 
     Access operator[](const Key& key) {
-        auto& s = buckets_[static_cast<uint64_t>(key) % buckets_.size()];
-        return {std::lock_guard(s.first), s.second[key]};
+        auto& bucket = buckets_[static_cast<uint64_t>(key) % buckets_.size()];
+        return {std::lock_guard(bucket.first), bucket.second[key]};
+    }
+
+    void Erase(const Key& key) {
+        auto& bucket = buckets_[static_cast<uint64_t>(key) % buckets_.size()];
+        std::lock_guard<std::mutex> g(bucket.first);
+        bucket.second.erase(key);
     }
 
     std::map<Key, Value> BuildOrdinaryMap() {
