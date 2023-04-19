@@ -52,8 +52,10 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
     std::sort(policy, matched_words.begin(), matched_words.end()); //, std::greater<std::string_view>()
 
     auto last_matched_word = std::unique(policy, matched_words.begin(), matched_words.end());
-
-    return {{matched_words.begin(), next(last_matched_word, -1)}, documents_.at(document_id).status};
+    auto first_matched_word = 
+    (*matched_words.begin() == "" ? next(matched_words.begin()) : matched_words.begin());
+    
+    return {{first_matched_word, last_matched_word}, documents_.at(document_id).status};
 }
 
 std::tuple<std::vector<std::string_view>, DocumentStatus> 
@@ -116,10 +118,6 @@ std::vector<Document> SearchServer::FindTopDocuments(std::string_view raw_query,
     return FindTopDocuments(
         raw_query, [status](int document_id, DocumentStatus document_status, int rating) {
             return document_status == status;});
-}
-
-std::vector<Document> SearchServer::FindTopDocuments(std::string_view raw_query) const {
-    return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
 }
 
 int SearchServer::GetDocumentCount() const {
@@ -191,7 +189,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(std::string_view text) cons
 SearchServer::Query SearchServer::ParseQueryFast(std::string_view text) const {
     std::vector<std::string_view> plus_words;
     std::vector<std::string_view> minus_words;
-    plus_words.reserve(500); minus_words.reserve(500);
+    //plus_words.reserve(500); minus_words.reserve(500);
 
     for (const std::string_view word : SplitIntoWords(text)) {
         const QueryWord query_word = ParseQueryWord(word);

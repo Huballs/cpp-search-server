@@ -220,7 +220,7 @@ void TestMatchDocumentMine(){
     ASSERT_EQUAL(matched_words[2], "in"s);
     }
     {
-    auto [matched_words, status] = server.MatchDocument(std::execution::par,"in gray dog and white parrot"s, doc_id_1);
+    auto [matched_words, status] = server.MatchDocument("in gray dog and white parrot"s, doc_id_1);
     ASSERT_EQUAL(status, status_1);
     ASSERT_EQUAL(matched_words.size(), 1);
     ASSERT_EQUAL(matched_words[0], "in"s);
