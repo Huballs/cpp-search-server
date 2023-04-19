@@ -183,21 +183,29 @@ std::vector<Document> SearchServer::FindAllDocuments(ExecutionPolicy&& policy, c
 
     std::for_each(query.plus_words.begin(),
                 query.plus_words.end(),
-                [this, document_predicate, &document_to_relevance]
+                [this, document_predicate, &document_to_relevance, &query]
                 (const std::string_view word){
-                    auto it = word_to_document_freqs_.find(word);
-                    if(it == word_to_document_freqs_.end())
+                    auto it_word_to_doc_freqs = word_to_document_freqs_.find(word);
+                    if(it_word_to_doc_freqs == word_to_document_freqs_.end())
                         return;
                     
                     const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-                    for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
+                    for (const auto [document_id, term_freq] : it_word_to_doc_freqs->second) {
+                        /* check if doc_id has minus words */
+                        for (std::string_view minus_word : query.minus_words) {
+                            auto it = document_to_word_freqs_.at(document_id).find(minus_word);
+                            if(it != document_to_word_freqs_.at(document_id).end()) goto nextDocument;
+                        }
+                        nextDocument: continue;
+                        
                         const auto& document_data = documents_.at(document_id);
                         if (document_predicate(document_id, document_data.status, document_data.rating)) {
-                            document_to_relevance[document_id] += term_freq * inverse_document_freq;
+                            document_to_relevance[document_id].ref_to_value += term_freq * inverse_document_freq;
                         }
+                        
                     }
     });
-
+/*
     for (std::string_view word : query.minus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
@@ -205,10 +213,10 @@ std::vector<Document> SearchServer::FindAllDocuments(ExecutionPolicy&& policy, c
         for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {
             document_to_relevance.erase(document_id);
         }
-    }
+    }*/
 
     std::vector<Document> matched_documents;
-    for (const auto [document_id, relevance] : document_to_relevance) {
+    for (const auto [document_id, relevance] : document_to_relevance.BuildOrdinaryMap()) {
         matched_documents.push_back(
             {document_id, relevance, documents_.at(document_id).rating});
     }
