@@ -202,24 +202,19 @@ SearchServer::Query SearchServer::ParseQueryFast(std::string_view text) const {
 }
 
 SearchServer::Query SearchServer::ParseQuerySorted(std::string_view text) const{
-    Query result;
+    
+    Query result = ParseQueryFast(text);
 
-    std::set<std::string_view> plus_words;
-    std::set<std::string_view> minus_words;
-    for (const std::string_view word : SplitIntoWords(text)) {
-        const QueryWord query_word = ParseQueryWord(word);
-        if (!query_word.is_stop) {
-            if (query_word.is_minus) {
-                minus_words.insert(query_word.data);
-            }
-            else {
-                plus_words.insert(query_word.data);
-            }
-        }
-    }
+    std::sort(result.plus_words.begin(), result.plus_words.end());
+    auto last_plus_word = 
+    std::unique(result.plus_words.begin(), result.plus_words.end());
 
-    return {std::vector<std::string_view>(plus_words.begin(), plus_words.end()),
-            std::vector<std::string_view>(minus_words.begin(), minus_words.end())};
+    std::sort(result.minus_words.begin(), result.minus_words.end());
+    auto last_minus_word = 
+    std::unique(result.minus_words.begin(), result.minus_words.end());
+
+    return {std::vector<std::string_view>(result.plus_words.begin(), last_plus_word),
+            std::vector<std::string_view>(result.minus_words.begin(), last_minus_word)};
 }
 
 // Existence required
