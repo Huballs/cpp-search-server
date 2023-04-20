@@ -482,8 +482,8 @@ void TestRemoveDocument(){
     found_docs = server.FindTopDocuments("dog"s);
     ASSERT_EQUAL(found_docs.size(), 3);
 
-    server.RemoveDocument(std::execution::seq, 3);
-    server.RemoveDocument(std::execution::seq, 4);
+    server.RemoveDocument(3);
+    server.RemoveDocument(std::execution::par, 4);
 
     found_docs = server.FindTopDocuments("dog"s);
     ASSERT_EQUAL(found_docs.size(), 1);
