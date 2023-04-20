@@ -214,11 +214,20 @@ template <class ExecutionPolicy>
 void SearchServer::RemoveDocument(ExecutionPolicy&& policy, int document_id){
     id_list_.erase(document_id);   
 
-    std::for_each(policy,
+    std::vector<std::string_view> words(document_to_word_freqs_[document_id].size());
+
+    std::transform(policy,
         document_to_word_freqs_[document_id].begin(),
         document_to_word_freqs_[document_id].end(),
-        [this, document_id](const auto &word_freqs){
-            word_to_document_freqs_[word_freqs.first].erase(document_id);
+        words.begin(),
+        [](const auto &word){
+            return (word.first);
+        }
+    );
+
+    std::for_each(policy, words.begin(), words.end(),
+        [this, document_id](std::string_view word) {
+            word_to_document_freqs_[word].erase(document_id);
         }
     );
 
