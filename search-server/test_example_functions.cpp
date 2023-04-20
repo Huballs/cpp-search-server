@@ -107,8 +107,14 @@ void TestFindAndAddDocument(){
     ASSERT_EQUAL(found_docs.size(), 1);
     ASSERT_EQUAL(found_docs[0].id, doc_id_1);
 
-    // find two
-    found_docs = server.FindTopDocuments("in"s);
+    // find two seq
+    found_docs = server.FindTopDocuments(std::execution::seq, "in"s);
+    ASSERT_EQUAL(found_docs.size(), 2);
+    ASSERT_EQUAL(found_docs[0].id, doc_id_1);
+    ASSERT_EQUAL(found_docs[1].id, doc_id_2);
+
+    // find two par
+    found_docs = server.FindTopDocuments(std::execution::par, "in"s);
     ASSERT_EQUAL(found_docs.size(), 2);
     ASSERT_EQUAL(found_docs[0].id, doc_id_1);
     ASSERT_EQUAL(found_docs[1].id, doc_id_2);

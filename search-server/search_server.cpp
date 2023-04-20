@@ -10,15 +10,10 @@ SearchServer::SearchServer(const std::string& stop_words_text)
         SplitIntoWords(stop_words_text)){
 }
 
-SearchServer::SearchServer(const char* stop_words_text)
-    : SearchServer(
-        SplitIntoWords(stop_words_text)){
-}
-
 std::tuple<std::vector<std::string_view>, DocumentStatus> 
 SearchServer::MatchDocument(std::execution::parallel_policy policy, 
                 std::string_view raw_query,
-                int document_id) const{
+                int document_id) const {
 
     if(!id_list_.count(document_id))
         throw std::out_of_range("ID doesn't exist");
@@ -37,7 +32,6 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
     if(is_minus_word != query.minus_words.end())
         return {std::vector<std::string_view>{}, documents_.at(document_id).status};
 
-
     std::vector<std::string_view> matched_words(query.plus_words.size());
 
     std::copy_if(policy, query.plus_words.begin(),
@@ -49,9 +43,11 @@ SearchServer::MatchDocument(std::execution::parallel_policy policy,
                 }       
     );
 
-    std::sort(policy, matched_words.begin(), matched_words.end()); //, std::greater<std::string_view>()
+    std::sort(policy, matched_words.begin(), matched_words.end());
 
     auto last_matched_word = std::unique(policy, matched_words.begin(), matched_words.end());
+    /* Пустые строки(если plus_words > matched_words) у меня сортируются в начало 
+        (в тренажере в конец (?)), надо удалить: */
     auto first_matched_word = 
     (*matched_words.begin() == "" ? next(matched_words.begin()) : matched_words.begin());
     
@@ -189,7 +185,6 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(std::string_view text) cons
 SearchServer::Query SearchServer::ParseQueryFast(std::string_view text) const {
     std::vector<std::string_view> plus_words;
     std::vector<std::string_view> minus_words;
-    //plus_words.reserve(500); minus_words.reserve(500);
 
     for (const std::string_view word : SplitIntoWords(text)) {
         const QueryWord query_word = ParseQueryWord(word);

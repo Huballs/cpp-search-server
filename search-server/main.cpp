@@ -62,10 +62,11 @@ void Test(string_view mark, const SearchServer& search_server, const vector<stri
 
 #define TEST(policy) Test(#policy, search_server, queries, execution::policy)
 
-LogIncremental log_incr;
-
 int main() {
-    //TestSearchServer();
+    std::cout << "Threads: " << std::thread::hardware_concurrency() << std::endl;
+
+    TestSearchServer();
+    
     mt19937 generator;
     const auto dictionary = GenerateDictionary(generator, 1000, 10);
     const auto documents = GenerateQueries(generator, dictionary, 4'000, 70);
@@ -76,8 +77,4 @@ int main() {
     const auto queries = GenerateQueries(generator, dictionary, 100, 70);
     TEST(seq);
     TEST(par);
-
-    std::cout << log_incr.getIncrement("plus_words") << " - " << log_incr.getCounts("plus_words") << std::endl;
-    std::cout << log_incr.getIncrement("minus_words") << " - " << log_incr.getCounts("minus_words") << std::endl;
-    std::cout << log_incr.getIncrement("document_to_relevance") << " - " << log_incr.getCounts("document_to_relevance") << std::endl;
 }

@@ -5,7 +5,6 @@ LogDuration::LogDuration(std::string_view id, std::ostream& dst_stream)
         , dst_stream_(dst_stream) {
     }
 
-
 LogDuration::~LogDuration() {
     using namespace std::chrono;
     using namespace std::literals;
