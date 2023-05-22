@@ -50,14 +50,16 @@ Above, place documents where the search word occurs more than once.
 Here you need to calculate the term frequency or TF.
 For a specific word and a specific document, this is the share that this word occupies among all.
 
-```GetDocumentCount()``` 
-returns the number of documents in the search server
+```
+GetDocumentCount()
+``` 
+ - returns the number of documents in the search server
 
 ```
 begin
 end
-```-
-return iterators. The iterator will give access to the id of all documents stored in the search server.
+```
+- return iterators. The iterator will give access to the id of all documents stored in the search server.
 ```
 tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(raw_query, document_id)
 ```
@@ -66,11 +68,47 @@ and the second object is the status of the document
 
 Method of obtaining word frequencies by document id:
 ```
-map<string, double> GetWordFrequencies(document_id)```
+map<string, double> GetWordFrequencies(document_id)
+```
 
-Deleting a document from the search server
+Deleting a document from the search server:
 ```
 RemoveDocument(document_id)
 RemoveDocument(ExecutionPolicy,document_id)
 RemoveDocument(ExecutionPolicy, document_id)
 ```
+
+# Technology stack:
+- The project shows knowledge of the basic principles of C++ programming:
+  - Numbers, strings, symbols, data input/output in console, conditions, loops.
+  - The use of basic algorithms .
+  - Using structures, classes, lambda functions, creating tuples
+  - Parsign of lines with output to the screen
+  - Use of Templates and Specialization of templates
+  - Creating and using macros
+  - Overloading operators
+  - Handling exceptions
+  - Application of the optional class
+  - Iterators
+  - Recursion
+  - Stack, Dec
+  - Creating and using macros
+  - Overloading operators
+  - Handling exceptions
+  - Application of the optional class
+  - Iterators
+  - Working with standard input/output streams Working with standard input/output streams
+  - Static, Automatic and Dynamic placement of objects in memory
+  - Parallel work using the bible library
+  - Scan algorithms
+  - Asynchronous calculations using the library
+  - Race state protection: mutex, lock_guard, atomic-types
+- Calculation of term frequency and inverse document frequency
+- Unit testing
+- Decomposition and debugging
+- Creating multi-file projects
+- Profiling
+
+- MapReduce as a concept in which the algorithm is divided into two stages:
+independent filtering and transformation of individual elements (map or transform);
+grouping of the results of the previous stage (reduce).
