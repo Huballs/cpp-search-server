@@ -25,7 +25,7 @@ void AddDocument(int document_id, string_view document,DocumentStatus status, co
 ```
 `document` - a string: "funny pet and nasty -rat"s
 where "funny pet nasty" - the words that will be searched for.
-"and" - the stop word specified in the SearchServer constructor
+"and" - the stop word specified in the SearchServer constructor. 
 "-rat" - minus-word.
 Minus-words exclude documents containing such words from the search results.
 
