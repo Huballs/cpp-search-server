@@ -16,24 +16,29 @@ make
 The core of the search engine is the class: SearchServer
 Methods of the SearchServer class:
 
-The constructor accepts a string of stop-words, for example: "in at and"s
+The constructor accepts a string of stop-words, for example: "in at and"s.
 The stop-word in the query is not taken into account when searching.
 
-Adding documents to the search engine. 
-`void AddDocument(int document_id, string_view document,DocumentStatus status, const vector<int> &ratings);`
-
+Adding documents to the search engine:
+```
+void AddDocument(int document_id, string_view document,DocumentStatus status, const vector<int> &ratings);
+```
 `document` - a string: "funny pet and nasty -rat"s
-where "funny pet nasty" - the words that will be searched for
+where "funny pet nasty" - the words that will be searched for.
 "and" - the stop word specified in the SearchServer constructor
-"-rat" - mius-word.
-Mnius-words exclude documents containing such words from the search results.
-Possible DocumentStatus: ACTUAL, IRRELEVANT, BANNED, REMOVED
-ratings - Each document at the input has a set of user ratings.
-The first digit is the number of ratings
+"-rat" - minus-word.
+Minus-words exclude documents containing such words from the search results.
+
+`enum DocumentStatus:`
+```
+ACTUAL, IRRELEVANT, BANNED, REMOVED
+```
+`ratings` - Each document at the input has a set of user ratings.
+The first digit is the number of ratings;
 For example:{4 5 -12 2 1};
 
 Document search in the search server and ranking by TF-IDF
-There are 6 ways to call the function 3 multithreaded (ExecutionPolicy) and 3 single-threaded
+There are 6 ways to call the function: 3 multithreaded (ExecutionPolicy) and 3 single-threaded
 ```
 FindTopDocuments (ExecutionPolicy,query)
 FindTopDocuments (ExecutionPolicy,query,DocumentStatus)
@@ -42,13 +47,10 @@ FindTopDocuments (query)
 FindTopDocuments (query,DocumentStatus)
 FindTopDocuments (query,DocumentPredicate)
 ```
-It returns vector matching by query
+They return vector of `document` type matching the query.
 The usefulness of words is evaluated by the concept of inverse document frequency or IDF.
 This value is a property of a word, not a document.
 The more documents have a word in them, the lower the IDF.
-Above, place documents where the search word occurs more than once.
-Here you need to calculate the term frequency or TF.
-For a specific word and a specific document, this is the share that this word occupies among all.
 
 ```
 GetDocumentCount()
