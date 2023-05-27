@@ -4,6 +4,9 @@
 # Description
 The search server provides parsing of search queries, document search, sorting of results by specified criteria, removal of duplicates. Server operation is accelerated due to multithreading and use of the std::string_view class.
 
+# Requirements
+C++std17, TBB(Intel Threading Building Blocks)
+
 # Build Project using Cmake
 ```
 mkdir Release
