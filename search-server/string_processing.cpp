@@ -1,5 +1,5 @@
 #include "string_processing.h"
-
+#include <cstdint>
 
 std::vector<std::string_view> SplitIntoWords(std::string_view text) {
     std::vector<std::string_view> result;
