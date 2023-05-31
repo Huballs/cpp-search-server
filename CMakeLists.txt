@@ -4,7 +4,10 @@ project(search-server)
 add_definitions("-std=c++17")
 
 set(CMAKE_COLOR_DIAGNOSTICS ON)
-set(DCMAKE_PREFIX_PATH "C:\\msys64\\ucrt64\\include\\tbb")
+
+if(WINDOWS)
+    set(DCMAKE_PREFIX_PATH "C:\\msys64\\ucrt64\\include\\tbb")
+endif(WINDOWS)
 
 find_package(TBB REQUIRED)
 
